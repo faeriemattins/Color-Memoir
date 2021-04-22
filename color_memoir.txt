@@ -1,0 +1,328 @@
+#include <LiquidCrystal.h>
+#include<time.h>
+
+LiquidCrystal lcd( A0, A1, A2, A3, A4, A5);
+int button[4]={7,6,5,4};
+int led[4]={13,12,11,10};
+int button_status;
+int i,score=0,count=0;
+int current=4,ran[50];
+int input[50];
+int high_score=0,mode,level;
+int player1_score=0,player2_score=0;
+const int buzzer = 9;
+
+void setup()
+{
+	for(i=0;i<4;i++)
+    {
+	pinMode(led[i],OUTPUT);
+	pinMode(button[i],INPUT_PULLUP);
+    }
+	pinMode(buzzer, OUTPUT);
+  
+    lcd.begin(16,2);
+    lcd.print("COLOR MEMOIR");
+  delay(2000);
+    lcd.clear();
+    lcd.print("Choose Mode");
+  delay(2000);
+  
+    lcd.clear();
+    lcd.print("Single - Red");
+    lcd.setCursor(0,1);
+    lcd.print("Double - Blue");
+  delay(3000);
+  
+  while(true){
+  if(digitalRead(7)==LOW)
+	{
+	digitalWrite(led[0], HIGH);
+	delay(200);
+	digitalWrite(led[0], LOW);
+	delay(250);
+    mode=0;
+    break;
+	}
+    else if(digitalRead(5)==LOW)
+    {
+	digitalWrite(led[2], HIGH);
+	delay(200);
+	digitalWrite(led[2], LOW);
+	delay(250);
+	mode=1;
+    break;
+    }
+  }
+  
+    lcd.clear();
+    lcd.print("Choose Level");
+  delay(1000);
+  
+    lcd.clear();
+    lcd.print("Easy - Red");
+    lcd.setCursor(0,1);
+    lcd.print("Hard - Blue");
+  delay(2000);
+  
+  while(true){
+  if(digitalRead(7)==LOW)
+	{
+	digitalWrite(led[0], HIGH);
+	delay(200);
+	digitalWrite(led[0], LOW);
+	delay(250);
+    level=0;
+    break;
+	}
+    else if(digitalRead(5)==LOW)
+    {
+	digitalWrite(led[2], HIGH);
+	delay(200);
+	digitalWrite(led[2], LOW);
+	delay(250);
+	level=1;
+      break;
+    }
+  }
+  
+    random_led();
+	delay(1000);
+    Serial.print(level);
+    Serial.print(mode);
+}
+
+void loop()
+{
+    lcd.clear();
+    lcd.print("Round-");
+    lcd.print(current-3);
+  if(mode==1){
+    if(count==0){
+    lcd.print(" Player1");
+    }else{
+    lcd.print(" Player2");
+    }
+  }
+    delay(1000);
+  	digitalWrite(led[0], HIGH);
+	digitalWrite(led[1], HIGH);
+	digitalWrite(led[2], HIGH);
+	digitalWrite(led[3], HIGH);
+	delay(1000);
+	digitalWrite(led[0], LOW);
+	digitalWrite(led[1], LOW);
+	digitalWrite(led[2], LOW);
+	digitalWrite(led[3], LOW);
+    delay(2000);
+    
+	for(i=0;i<current;i++)
+	{
+		digitalWrite(led[ran[i]],HIGH);
+		delay(500);
+		digitalWrite(led[ran[i]],LOW);
+		delay(500);
+	}
+	input_button();
+	check();
+}
+
+void random_led()
+{
+	for(i=0;i<50;i++)
+	{
+		ran[i]=random(0,4);//generates random number between (0 to 3)
+	}
+}
+
+void input_button()
+{
+	int inf=1;
+	int chance=0;
+	while(inf==1)
+	{
+		for(i=0;i<4;i++)
+		{
+			digitalWrite(led[i],LOW);
+			button_status=digitalRead(button[i]);
+			if(button_status==LOW && button[i]==7)
+			{
+				digitalWrite(led[0], HIGH);
+				delay(200);
+				digitalWrite(led[0], LOW);
+				delay(250);
+				input[chance]=0;
+				chance++;
+			}
+			else if(button_status==LOW && button[i]==6)
+			{
+				digitalWrite(led[1], HIGH);
+				delay(200);
+				digitalWrite(led[1], LOW);
+				delay(250);
+				input[chance]=1;
+				chance++;
+			}
+			else if(button_status==LOW && button[i]==5)
+			{
+				digitalWrite(led[2], HIGH);
+				delay(200);
+				digitalWrite(led[2], LOW);
+				delay(250);
+				input[chance]=2;
+				chance++;
+			}
+			else if(button_status==LOW && button[i]==4)
+			{
+				digitalWrite(led[3], HIGH);
+				delay(200);
+				digitalWrite(led[3], LOW);
+				delay(250);
+				input[chance]=3;
+				chance++;
+			}
+		}
+		if(chance==current)
+		{
+			inf=0;
+		}
+	}
+}
+
+void check()
+{   
+    lcd.setCursor(0,1);
+    int j=0; 
+	for(i=0;i<current;i++)
+	{
+      if(ran[i]!=input[i]){
+        lcd.print("Wrong Sequence");
+        delay(1000);
+        lcd.clear();
+        lcd.print("GAME OVER");
+        if(mode==0){
+        gameOver_single();}
+        else{
+		gameOver_double();
+        }
+      }else{
+        j++;
+      }
+	}
+  if(j==current){
+    lcd.print("Sequence Correct!");
+    }
+    current++;
+
+	digitalWrite(led[0], HIGH);
+	digitalWrite(led[1], HIGH);
+	digitalWrite(led[2], HIGH);
+	digitalWrite(led[3], HIGH);
+	delay(1000);
+	digitalWrite(led[0], LOW);
+	digitalWrite(led[1], LOW);
+	digitalWrite(led[2], LOW);
+	digitalWrite(led[3], LOW);
+	delay(1000);
+  loop();
+}
+
+void gameOver_single()
+{
+	digitalWrite(led[0], HIGH);
+    tone(buzzer, 1000,500);
+  	delay(2000);
+  	noTone(buzzer);
+	score=current-4;
+    lcd.setCursor(0,1);
+    lcd.print("Score: ");
+    lcd.print(score);
+   	delay(2000);
+   	if(score>high_score)
+    {
+      lcd.clear();
+      lcd.print("High Score!");
+      lcd.setCursor(0,1);
+      lcd.print("Congrats");
+      delay(2000);
+      high_score=score;
+    }
+  	endgame();
+}
+
+void gameOver_double()
+{
+    count++;
+	digitalWrite(led[0], HIGH);
+    tone(buzzer, 1000,500);
+  	delay(2000);
+  	noTone(buzzer);
+    Serial.print(count);
+   	if(count==1)
+    {
+      player1_score=current-4;
+      reset();
+    }
+	else
+    {
+      player2_score=current-4;
+      lcd.setCursor(0,1);
+        if(player1_score>player2_score){
+    lcd.print("Player1 wins");
+  }else if(player1_score<player2_score){
+      lcd.print("Player2 wins");
+        }else{
+          lcd.print("Draw");
+        }
+     }
+  delay(2000);
+  endgame();
+}
+
+
+void endgame()
+{
+  for(int i=0;i<4;i++){
+    digitalWrite(led[i], LOW);
+  }
+  lcd.clear();
+  lcd.print("Play again - Red");
+  lcd.setCursor(0,1);
+  lcd.print("No thanks - Blue");
+  Serial.print("opop");
+  while(true){
+  if(digitalRead(7)==LOW)
+	{
+	digitalWrite(led[0], HIGH);
+	delay(200);
+	digitalWrite(led[0], LOW);
+	delay(250);
+    lcd.clear();
+    reset();
+	}
+    else if(digitalRead(5)==LOW)
+    {
+	digitalWrite(led[2], HIGH);
+	delay(200);
+	digitalWrite(led[2], LOW);
+	delay(250);
+      lcd.clear();
+	exit(0);
+    }
+  }
+}
+
+void reset()
+{
+	digitalWrite(led[0], HIGH);
+	digitalWrite(led[1], HIGH);
+	digitalWrite(led[2], HIGH);
+	digitalWrite(led[3], HIGH);
+	delay(1000);
+	digitalWrite(led[0], LOW);
+	digitalWrite(led[1], LOW);
+	digitalWrite(led[2], LOW);
+	digitalWrite(led[3], LOW);
+	current=4;
+    loop();
+}
